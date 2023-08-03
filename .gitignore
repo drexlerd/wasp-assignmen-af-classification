@@ -3,3 +3,7 @@ codesubset
 codesubset.tar.gz
 model.pth
 ecg-preprocessing
+.env
+.vscode
+outputs
+__pycache__
