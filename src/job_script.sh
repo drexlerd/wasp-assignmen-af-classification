@@ -6,4 +6,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=dominik.drexler@liu.se,martin.funkquist@liu.se
 
-python3 hyperparam_tuning.py --num_workers 32 --num_trials 100 --walltime_limit 172800
+RUN_ERR="run.err"
+RUN_LOG="run.log"
+
+python3 hyperparam_tuning.py --n_workers 32 --n_trials 100 --walltime_limit 172800 2> ${RUN_ERR} 1> ${RUN_LOG}
