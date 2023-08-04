@@ -21,9 +21,11 @@ if __name__ == "__main__":
   args = arg_parser.parse_args()
 
   cs = ConfigurationSpace({
-    "lr": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1],
+    "lr": [1e-4, 1e-3, 1e-2, 1e-1],
     "kernel_size": [7, 15, 31, 63],
-    "n_res_blks": [2, 4],
+    "n_res_blks": [1, 2, 3, 4],
+    "dropout_rate": [0.0, 0.5, 0.8],
+    "batch_size": [16, 32, 64],
   })
 
   # set seed

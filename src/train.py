@@ -11,7 +11,7 @@ from tqdm import tqdm, trange
 
 from model import Model
 
-debug = True
+debug = False
 
 def train_loop(epoch, dataloader, model, optimizer, loss_function, device):
     # model to training mode (important to correctly handle dropout or batchnorm layers)
@@ -86,7 +86,8 @@ def eval_loop(epoch, dataloader, model, loss_function, device):
 def train(config: Configuration, seed: int) -> float:
   # Hyperparameters
   weight_decay = 1e-1
-  batch_size = 32
+  batch_size = config["batch_size"]
+  num_epochs = 50
 
   # Set device
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -99,7 +100,7 @@ def train(config: Configuration, seed: int) -> float:
   train_dataloader, valid_dataloader, n_classes, len_dataset = get_dataloaders(seed, batch_size)
 
   # =============== Define model ============================================#
-  model = Model(kernel_size=config["kernel_size"], n_res_blks=config["n_res_blks"])
+  model = Model(kernel_size=config["kernel_size"], n_res_blks=config["n_res_blks"], dropout_rate=config["dropout_rate"])
   model.to(device=device)
 
   # =============== Define optimizer ========================================#
@@ -113,7 +114,7 @@ def train(config: Configuration, seed: int) -> float:
   train_loss_all, valid_loss_all, train_auroc_all, valid_auroc_all = [], [], [], []
 
   # loop over epochs
-  for epoch in trange(1, 1 + 1):
+  for epoch in trange(1, num_epochs + 1):
       # training loop
       train_loss, y_train_pred, y_train_true = train_loop(epoch, train_dataloader, model, optimizer, loss_function, device)
       # validation loop
