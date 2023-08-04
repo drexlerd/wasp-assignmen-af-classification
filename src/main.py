@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from dataset import get_dataloaders
 from model import Model
 from train import eval_loop, train_loop
-
+import globals
 
 # set seed
 seed = 42
@@ -16,10 +16,10 @@ np.random.seed(seed)
 torch.manual_seed(seed)
 
 # Hyperparameters
-learning_rate = 1e-3 
-weight_decay = 1e-1  
-num_epochs = 150
+learning_rate = 1e-3
+weight_decay = 1e-1
 batch_size = 4
+lr_scheduler = None
 
 # Set device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -52,8 +52,7 @@ best_loss = np.Inf
 train_loss_all, valid_loss_all, train_auroc_all, valid_auroc_all = [], [], [], []
 
 # loop over epochs
-num_epochs = 30
-for epoch in trange(1, num_epochs + 1):
+for epoch in trange(1, globals.n_epochs + 1):
     # training loop
     train_loss, y_train_pred, y_train_true = train_loop(epoch, train_dataloader, model, optimizer, loss_function, device)
     # validation loop
@@ -66,9 +65,9 @@ for epoch in trange(1, num_epochs + 1):
 
     # Flatten the probabilities and true labels for AUROC calculation
     train_pred_flat = y_train_pred.flatten()
-    valid_pred_flat = y_valid_pred.flatten()   
+    valid_pred_flat = y_valid_pred.flatten()
     train_true_flat = y_train_true.flatten()
-    valid_true_flat = y_valid_true.flatten() 
+    valid_true_flat = y_valid_true.flatten()
 
     print("train_pred:", train_pred_flat)
     print("valid_pred:", valid_pred_flat)
@@ -87,7 +86,7 @@ for epoch in trange(1, num_epochs + 1):
     # save best model: here we save the model only for the lowest validation loss
     if valid_loss < best_loss:
         # Save model parameters
-        torch.save({'model': model.state_dict()}, 'model.pth') 
+        torch.save({'model': model.state_dict()}, 'model.pth')
         # Update best validation loss
         best_loss = valid_loss
         # statement
