@@ -99,7 +99,7 @@ def train(config: Configuration, seed: int) -> float:
   train_dataloader, valid_dataloader, n_classes, len_dataset = get_dataloaders(seed, batch_size)
 
   # =============== Define model ============================================#
-  model = Model()
+  model = Model(kernel_size=config["kernel_size"], n_res_blks=config["n_res_blks"])
   model.to(device=device)
 
   # =============== Define optimizer ========================================#
