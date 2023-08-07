@@ -3,7 +3,7 @@ from torch import nn
 
 
 class ResBlk(nn.Module):
-    def __init__(self, kernel_size: int, dropout_rate: float, in_channels: int, out_channels: int):
+    def __init__(self, kernel_size: int, dropout_rate: float, in_channels: int, out_channels: int, factor: int):
         assert kernel_size % 2 == 1  # kernel_size must be odd
         super(ResBlk, self).__init__()
         padding = kernel_size // 2
@@ -11,9 +11,9 @@ class ResBlk(nn.Module):
         self.batchnorm1 = nn.BatchNorm1d(out_channels, track_running_stats=False)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(dropout_rate)
-        self.conv2 = nn.Conv1d(out_channels, out_channels, kernel_size=kernel_size, stride=4, padding=padding, bias=False)
+        self.conv2 = nn.Conv1d(out_channels, out_channels, kernel_size=kernel_size, stride=factor, padding=padding, bias=False)
 
-        self.max_pool = nn.MaxPool1d(kernel_size=kernel_size, stride=4, padding=padding)
+        self.max_pool = nn.MaxPool1d(kernel_size=kernel_size, stride=factor, padding=padding)
         self.conv11 = nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, padding="same", bias=False)
 
     def forward(self, x):
@@ -50,7 +50,7 @@ class ResBlk(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, kernel_size: int, n_res_blks: int, dropout_rate: float, out_channels: int):
+    def __init__(self, kernel_size: int, n_res_blks: int, dropout_rate: float, out_channels: int, factor: int):
         super(Model, self).__init__()
         self.conv = nn.Conv1d(in_channels=8, out_channels=out_channels, kernel_size=kernel_size, padding="same", bias=False)
         self.batchnorm = nn.BatchNorm1d(num_features=out_channels, track_running_stats=False)
@@ -67,9 +67,10 @@ class Model(nn.Module):
                     kernel_size=kernel_size,
                     dropout_rate=dropout_rate,
                     in_channels=in_channels,
-                    out_channels=tmp_out_channels)
+                    out_channels=tmp_out_channels,
+                    factor=factor)
             )
-            out_sequence_length //= 4
+            out_sequence_length //= factor
 
         self.linear = torch.nn.Linear(tmp_out_channels*out_sequence_length, 1, bias=False)
 

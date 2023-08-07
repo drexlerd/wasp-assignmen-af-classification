@@ -5,7 +5,7 @@ from torch import nn
 import torch
 from ConfigSpace import Configuration
 from dataset import get_dataloaders
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, average_precision_score
 # from tqdm.notebook import tqdm
 from tqdm import tqdm, trange
 
@@ -84,81 +84,84 @@ def eval_loop(epoch, dataloader, model, loss_function, device):
 
 
 def train(config: Configuration, seed: int) -> float:
-  # Hyperparameters
-  weight_decay = 1e-1
-  batch_size = config["batch_size"]
-  num_epochs = 50
+    # Hyperparameters
+    weight_decay = 1e-1
+    batch_size = config["batch_size"]
+    num_epochs = 50
 
-  # Set device
-  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-  tqdm.write("Use device: {device:}\n".format(device=device))
+    # Set device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    tqdm.write("Use device: {device:}\n".format(device=device))
 
-  # =============== Define loss function ====================================#
-  loss_function = torch.nn.BCEWithLogitsLoss()
+    # =============== Define loss function ====================================#
+    loss_function = torch.nn.BCEWithLogitsLoss()
 
-  # =============== Get dataloaders ========================================#
-  train_dataloader, valid_dataloader, n_classes, len_dataset = get_dataloaders(seed, batch_size)
+    # =============== Get dataloaders ========================================#
+    train_dataloader, valid_dataloader, n_classes, len_dataset = get_dataloaders(seed, batch_size)
 
-  # =============== Define model ============================================#
-  model = Model(kernel_size=config["kernel_size"], n_res_blks=config["n_res_blks"], dropout_rate=config["dropout_rate"], out_channels=config["out_channels"])
-  model.to(device=device)
+    # =============== Define model ============================================#
+    model = Model(kernel_size=config["kernel_size"], n_res_blks=config["n_res_blks"], dropout_rate=config["dropout_rate"], out_channels=config["out_channels"], factor=config["factor"])
+    model.to(device=device)
 
-  # =============== Define optimizer ========================================#
-  tqdm.write("Define optimiser...")
-  optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], weight_decay=weight_decay)
-  tqdm.write("Done!\n")
+    # =============== Define optimizer ========================================#
+    tqdm.write("Define optimiser...")
+    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], weight_decay=weight_decay)
+    tqdm.write("Done!\n")
 
-  # =============== Train model =============================================#
-  tqdm.write("Training...")
-  best_loss = np.Inf
-  train_loss_all, valid_loss_all, train_auroc_all, valid_auroc_all = [], [], [], []
+    # =============== Train model =============================================#
+    tqdm.write("Training...")
+    best_loss = np.Inf
+    train_loss_all, valid_loss_all, train_auroc_all, valid_auroc_all = [], [], [], []
 
-  # loop over epochs
-  for epoch in trange(1, num_epochs + 1):
-      # training loop
-      train_loss, y_train_pred, y_train_true = train_loop(epoch, train_dataloader, model, optimizer, loss_function, device)
-      # validation loop
-      valid_loss, y_valid_pred, y_valid_true = eval_loop(epoch, valid_dataloader, model, loss_function, device)
+    # loop over epochs
+    for epoch in trange(1, num_epochs + 1):
+        # training loop
+        train_loss, y_train_pred, y_train_true = train_loop(epoch, train_dataloader, model, optimizer, loss_function, device)
+        # validation loop
+        valid_loss, y_valid_pred, y_valid_true = eval_loop(epoch, valid_dataloader, model, loss_function, device)
 
-      # collect losses
-      train_loss_all.append(train_loss)
-      valid_loss_all.append(valid_loss)
+        # collect losses
+        train_loss_all.append(train_loss)
+        valid_loss_all.append(valid_loss)
 
-      # Flatten the probabilities and true labels for AUROC calculation
-      train_pred_flat = y_train_pred.flatten()
-      valid_pred_flat = y_valid_pred.flatten()
-      train_true_flat = y_train_true.flatten()
-      valid_true_flat = y_valid_true.flatten()
+        # Flatten the probabilities and true labels for AUROC calculation
+        train_pred_flat = y_train_pred.flatten()
+        valid_pred_flat = y_valid_pred.flatten()
+        train_true_flat = y_train_true.flatten()
+        valid_true_flat = y_valid_true.flatten()
 
-      # Calculate AUROC
-      train_auroc = roc_auc_score(train_true_flat, train_pred_flat)
-      train_auroc_all.append(train_auroc)
-      tqdm.write("Training AUROC: {:.4f}".format(train_auroc))
+        # Calculate AUROC
+        train_auroc = roc_auc_score(train_true_flat, train_pred_flat)
+        train_auroc_all.append(train_auroc)
+        tqdm.write("Training AUROC: {:.2f}".format(train_auroc))
 
-      valid_auroc = roc_auc_score(valid_true_flat, valid_pred_flat)
-      valid_auroc_all.append(valid_auroc)
-      tqdm.write("Validation AUROC: {:.4f}".format(valid_auroc))
+        valid_auroc = roc_auc_score(valid_true_flat, valid_pred_flat)
+        valid_auroc_all.append(valid_auroc)
+        tqdm.write("Validation AUROC: {:.2f}".format(valid_auroc))
 
-      # save best model: here we save the model only for the lowest validation loss
-      # if valid_loss < best_loss:
-      #     # Save model parameters
-      #     torch.save({'model': model.state_dict()}, 'model.pth')
-      #     # Update best validation loss
-      #     best_loss = valid_loss
-      #     # statement
-      #     model_save_state = "Best model -> saved"
-      # else:
-      #     model_save_state = ""
+        valid_ap = average_precision_score(valid_true_flat, valid_pred_flat)
+        tqdm.write("Validation AP: {:.2f}".format(valid_ap))
 
-      # Print message
-      tqdm.write('Epoch {epoch:2d}: \t'
-                  'Train Loss {train_loss:.6f} \t'
-                  'Valid Loss {valid_loss:.6f} \t'
-                  '{model_save}'
-                  .format(epoch=epoch,
-                          train_loss=train_loss,
-                          valid_loss=valid_loss,
-                          model_save="test")
-                      )
+        # save best model: here we save the model only for the lowest validation loss
+        # if valid_loss < best_loss:
+        #     # Save model parameters
+        #     torch.save({'model': model.state_dict()}, 'model.pth')
+        #     # Update best validation loss
+        #     best_loss = valid_loss
+        #     # statement
+        #     model_save_state = "Best model -> saved"
+        # else:
+        #     model_save_state = ""
 
-  return 1 - max(valid_auroc_all)  # SMAC always minimizes (the smaller the better)
+        # Print message
+        tqdm.write('Epoch {epoch:2d}: \t'
+                    'Train Loss {train_loss:.6f} \t'
+                    'Valid Loss {valid_loss:.6f} \t'
+                    '{model_save}'
+                    .format(epoch=epoch,
+                            train_loss=train_loss,
+                            valid_loss=valid_loss,
+                            model_save="test")
+                        )
+
+    return 1 - max(valid_auroc_all)  # SMAC always minimizes (the smaller the better)
