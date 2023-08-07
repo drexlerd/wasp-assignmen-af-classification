@@ -26,6 +26,7 @@ if __name__ == "__main__":
     "n_res_blks": [1, 2, 3, 4],
     "dropout_rate": [0.0, 0.5, 0.8],
     "batch_size": [16, 32, 64],
+    "out_channels": [8, 16, 32, 64, 128]
   })
 
   # set seed

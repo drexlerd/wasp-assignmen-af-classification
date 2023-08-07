@@ -3,7 +3,7 @@ from torch import nn
 
 
 class ResBlk(nn.Module):
-    def __init__(self, kernel_size: int, dropout_rate: float, in_channels=64, out_channels=64):
+    def __init__(self, kernel_size: int, dropout_rate: float, in_channels: int, out_channels: int):
         assert kernel_size % 2 == 1  # kernel_size must be odd
         super(ResBlk, self).__init__()
         padding = kernel_size // 2
@@ -50,28 +50,28 @@ class ResBlk(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, kernel_size: int, n_res_blks: int, dropout_rate: float):
+    def __init__(self, kernel_size: int, n_res_blks: int, dropout_rate: float, out_channels: int):
         super(Model, self).__init__()
-        self.conv = nn.Conv1d(in_channels=8, out_channels=64, kernel_size=kernel_size, padding="same", bias=False)
-        self.batchnorm = nn.BatchNorm1d(64, track_running_stats=False)
+        self.conv = nn.Conv1d(in_channels=8, out_channels=out_channels, kernel_size=kernel_size, padding="same", bias=False)
+        self.batchnorm = nn.BatchNorm1d(num_features=out_channels, track_running_stats=False)
         self.relu = nn.ReLU()
 
         self.res_layers = nn.Sequential()
-        out_channels = 64
+        tmp_out_channels = out_channels
         out_sequence_length = 4096
         for i in range(n_res_blks):
-            in_channels = 64 + (i // 2) * 64
-            out_channels = 64 + ((i+1) // 2) * 64
+            in_channels = out_channels + (i // 2) * out_channels
+            tmp_out_channels = out_channels + ((i+1) // 2) * out_channels
             self.res_layers.append(
                 ResBlk(
                     kernel_size=kernel_size,
                     dropout_rate=dropout_rate,
                     in_channels=in_channels,
-                    out_channels=out_channels)
+                    out_channels=tmp_out_channels)
             )
             out_sequence_length //= 4
 
-        self.linear = torch.nn.Linear(out_channels*out_sequence_length, 1, bias=False)
+        self.linear = torch.nn.Linear(tmp_out_channels*out_sequence_length, 1, bias=False)
 
 
     def forward(self, x):
