@@ -167,5 +167,4 @@ def train(config: Configuration, seed: int) -> float:
         if epoch > 20 and valid_auroc < 0.9:
             break
 
-
     return 1 - max(valid_auroc_all)  # SMAC always minimizes (the smaller the better)
