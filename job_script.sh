@@ -9,4 +9,4 @@
 RUN_ERR="run.err"
 RUN_LOG="run.log"
 
-python3 hyperparam_tuning.py --n_workers 12 --n_trials 100 --walltime_limit 172800 2> ${RUN_ERR} 1> ${RUN_LOG}
+python3 src/hyperparam_tuning.py --n_workers 12 --n_trials 100 --n_epochs 200 --walltime_limit 172800 2> ${RUN_ERR} 1> ${RUN_LOG}

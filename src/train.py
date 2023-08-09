@@ -84,10 +84,11 @@ def eval_loop(epoch, dataloader, model, loss_function, device):
 
 
 def train(config: Configuration, seed: int) -> float:
+    print(config)
     # Hyperparameters
     weight_decay = 1e-1
     batch_size = config["batch_size"]
-    num_epochs = 50
+    num_epochs = config["n_epochs"]
 
     # Set device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -163,5 +164,9 @@ def train(config: Configuration, seed: int) -> float:
                             valid_loss=valid_loss,
                             model_save="test")
                         )
+
+        if num_epochs > 20 and valid_auroc < 0.9:
+            break
+
 
     return 1 - max(valid_auroc_all)  # SMAC always minimizes (the smaller the better)
