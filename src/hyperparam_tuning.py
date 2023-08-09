@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 import numpy as np
 import torch
@@ -19,6 +20,7 @@ if __name__ == "__main__":
   arg_parser.add_argument("--n_trials", type=int, default=4)
   arg_parser.add_argument("--n_epochs", type=int, default=200)
   arg_parser.add_argument("--walltime_limit", type=int, default=120)
+  arg_parser.add_argument("--output_folder", type=str)
   args = arg_parser.parse_args()
 
   cs = ConfigurationSpace({
@@ -39,7 +41,7 @@ if __name__ == "__main__":
 
   scenario = Scenario(
       configspace=cs,
-      output_directory=Path("outputs"),
+      output_directory=Path(args.output_folder),
       walltime_limit=args.walltime_limit,
       # trial_walltime_limit=10,  # Limit to 30 seconds per trial
       n_trials=args.n_trials,  # Evaluated max 500 trials
@@ -54,5 +56,5 @@ if __name__ == "__main__":
               )
   incumbent = smac.optimize()
 
-  with open("outputs/incumbent.txt", "w") as f:
+  with open(os.path.join(args.output_folder, "incumbent.txt"), "w") as f:
     f.write(str(incumbent))
