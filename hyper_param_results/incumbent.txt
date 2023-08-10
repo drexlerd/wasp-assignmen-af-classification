@@ -1,0 +1,10 @@
+Configuration(values={
+  'batch_size': 32,
+  'dropout_rate': 0.0,
+  'factor': 4,
+  'kernel_size': 63,
+  'lr': 0.0001,
+  'n_epochs': 200,
+  'n_res_blks': 4,
+  'out_channels': 32,
+})
