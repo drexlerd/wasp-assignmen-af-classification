@@ -1,5 +1,5 @@
 
-import random
+import os
 import numpy as np
 from torch import nn
 import torch
@@ -143,15 +143,19 @@ def train(config: Configuration, seed: int) -> float:
         tqdm.write("Validation AP: {:.2f}".format(valid_ap))
 
         # save best model: here we save the model only for the lowest validation loss
-        # if valid_loss < best_loss:
-        #     # Save model parameters
-        #     torch.save({'model': model.state_dict()}, 'model.pth')
-        #     # Update best validation loss
-        #     best_loss = valid_loss
-        #     # statement
-        #     model_save_state = "Best model -> saved"
-        # else:
-        #     model_save_state = ""
+
+        if config.get("save") and valid_loss < best_loss:
+            if not config.get("output_dir") or not config.get("id"):
+                raise ValueError("Please specify 'output_dir' and 'id' in config, if you want to save the model.")
+            # Save model parameters
+            output_file = os.path.join(config.get("output_dir"), f'model{config.get("id")}.pth')
+            torch.save({'model': model.state_dict()}, output_file)
+            # Update best validation loss
+            best_loss = valid_loss
+            # statement
+            model_save_state = "Best model -> saved"
+        else:
+            model_save_state = ""
 
         # Print message
         tqdm.write('Epoch {epoch:2d}: \t'
@@ -161,7 +165,7 @@ def train(config: Configuration, seed: int) -> float:
                     .format(epoch=epoch,
                             train_loss=train_loss,
                             valid_loss=valid_loss,
-                            model_save="test")
+                            model_save=model_save_state)
                         )
 
         if epoch > 20 and valid_auroc < 0.9:
