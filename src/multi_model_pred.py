@@ -6,7 +6,7 @@ import torch
 from tqdm import tqdm
 from sklearn.metrics import roc_auc_score, average_precision_score
 
-from src.dataset import get_dataloaders
+from dataset import get_dataloaders
 
 from train import eval_loop
 
@@ -61,5 +61,5 @@ if __name__ == "__main__":
   valid_ap = average_precision_score(all_valid_true[0], preds)
   tqdm.write("Validation AP: {:.2f}".format(valid_ap))
 
-  
+
   
