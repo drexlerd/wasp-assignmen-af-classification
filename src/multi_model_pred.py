@@ -31,7 +31,7 @@ if __name__ == "__main__":
   train_dataloader, valid_dataloader, n_classes, len_dataset = get_dataloaders(seed, batch_size)
 
   models = []
-  for model_file in Path(args.models_folder).glob("*.pt"):
+  for model_file in Path(args.models_folder).glob("*.pth"):
     model = torch.load(model_file)
     model.to(device)
     models.append(model)
