@@ -1,4 +1,6 @@
 import argparse
+import json
+import os
 from pathlib import Path
 import numpy as np
 import torch
@@ -7,6 +9,7 @@ from tqdm import tqdm
 from sklearn.metrics import roc_auc_score, average_precision_score
 
 from dataset import get_dataloaders
+from model import Model
 
 from train import eval_loop
 
@@ -28,11 +31,16 @@ if __name__ == "__main__":
   loss_function = torch.nn.BCEWithLogitsLoss()
 
   batch_size = 32
-  train_dataloader, valid_dataloader, n_classes, len_dataset = get_dataloaders(seed, batch_size)
+
+  hparams = json.load(open(os.path.join(args.models_folder, "hparams.json")))
 
   models = []
-  for model_file in Path(args.models_folder).glob("*.pth"):
-    model = torch.load(model_file)
+  for model_file, hp in zip(Path(args.models_folder).glob("*.pth"), hparams):
+    # TODO: Update this
+    model = Model(kernel_size=hp["kernel_size"], n_res_blks=hp["n_res_blks"], 
+                  dropout_rate=hp["dropout_rate"], out_channels=hp["out_channels"], factor=1)
+    model_dict = torch.load(model_file, map_location=device)
+    model.load_state_dict(model_dict["model"], strict=False)
     model.to(device)
     models.append(model)
 
@@ -40,6 +48,7 @@ if __name__ == "__main__":
   all_valid_pred = []
   all_valid_true = []
   for model in models:
+    train_dataloader, valid_dataloader, _, _ = get_dataloaders(seed, batch_size)
     valid_loss, valid_pred, valid_true = eval_loop(1, valid_dataloader, model, loss_function, device)
     all_valid_loss.append(valid_loss)
     all_valid_pred.append(valid_pred)
