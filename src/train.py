@@ -149,7 +149,8 @@ def train(config: Configuration, seed: int) -> float:
                 raise ValueError("Please specify 'output_dir' and 'id' in config, if you want to save the model.")
             # Save model parameters
             output_file = os.path.join(config.get("output_dir"), f'model{config.get("id")}.pth')
-            torch.save({'model': model.state_dict()}, output_file)
+            # torch.save({'model': model.state_dict()}, output_file)
+            torch.save(model, output_file)
             # Update best validation loss
             best_loss = valid_loss
             # statement

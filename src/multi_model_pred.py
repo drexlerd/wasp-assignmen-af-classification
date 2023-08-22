@@ -33,10 +33,9 @@ if __name__ == "__main__":
   batch_size = 32
 
   hparams = json.load(open(os.path.join(args.models_folder, "hparams.json")))
-
+  model_files = sorted(Path(args.models_folder).glob("*.pth"))
   models = []
-  for model_file, hp in zip(Path(args.models_folder).glob("*.pth"), hparams):
-    # TODO: Update this
+  for model_file, hp in zip(model_files, hparams):
     model = Model(kernel_size=hp["kernel_size"], n_res_blks=hp["n_res_blks"], 
                   dropout_rate=hp["dropout_rate"], out_channels=hp["out_channels"], factor=1)
     model_dict = torch.load(model_file, map_location=device)
