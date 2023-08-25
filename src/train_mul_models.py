@@ -1,6 +1,8 @@
 import argparse, os
 import json
 from ConfigSpace import ConfigurationSpace
+import numpy as np
+import torch
 
 from train import train
 from get_best_setups import get_best_configs
@@ -13,6 +15,12 @@ if __name__ == "__main__":
     parser.add_argument("--n_best", type=int, default=5)
     parser.add_argument("--hparam_tuning_output_folder", type=str, help="Folder containing the output of the hyperparameter tuning process.")
     args = parser.parse_args()
+
+    # set seed
+    seed = 42
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
 
     if not os.path.exists(args.output_folder):
         os.makedirs(args.output_folder)

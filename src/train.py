@@ -84,6 +84,7 @@ def eval_loop(epoch, dataloader, model, loss_function, device):
 
 
 def train(config: Configuration, seed: int) -> float:
+    print(config)
     # Hyperparameters
     weight_decay = 1e-1
     batch_size = config["batch_size"]

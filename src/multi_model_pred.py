@@ -20,7 +20,7 @@ if __name__ == "__main__":
   args = arg_parser.parse_args()
 
   # set seed
-  seed = 0
+  seed = 42
   np.random.seed(seed)
   torch.manual_seed(seed)
 
@@ -32,28 +32,30 @@ if __name__ == "__main__":
 
   batch_size = 32
 
-  hparams = json.load(open(os.path.join(args.models_folder, "hparams.json")))
+  # hparams = json.load(open(os.path.join(args.models_folder, "hparams.json")))
   model_files = sorted(Path(args.models_folder).glob("*.pth"))
   models = []
-  for model_file, hp in zip(model_files, hparams):
-    model = Model(kernel_size=hp["kernel_size"], n_res_blks=hp["n_res_blks"], 
-                  dropout_rate=hp["dropout_rate"], out_channels=hp["out_channels"], factor=1)
-    model_dict = torch.load(model_file, map_location=device)
-    model.load_state_dict(model_dict["model"], strict=False)
-    model.to(device)
+  # for model_file, hp in zip(model_files, hparams):
+  for model_file in model_files:
+    # model = Model(kernel_size=hp["kernel_size"], n_res_blks=hp["n_res_blks"], 
+    #               dropout_rate=hp["dropout_rate"], out_channels=hp["out_channels"], factor=1)
+    model = torch.load(model_file, map_location=device)
+    # model_dict = torch.load(model_file, map_location=device)
+    # model.load_state_dict(model_dict["model"], strict=False)
+    # model.to(device)
     models.append(model)
 
   all_valid_loss = []
   all_valid_pred = []
   all_valid_true = []
   for model in models:
-    train_dataloader, valid_dataloader, _, _ = get_dataloaders(seed, batch_size)
+    _, valid_dataloader, _, _ = get_dataloaders(seed, batch_size)
     valid_loss, valid_pred, valid_true = eval_loop(1, valid_dataloader, model, loss_function, device)
     all_valid_loss.append(valid_loss)
-    all_valid_pred.append(valid_pred)
-    all_valid_true.append(valid_true)
+    all_valid_pred.append(np.squeeze(valid_pred).tolist())
+    all_valid_true.append(np.squeeze(valid_true).tolist())
 
-  assert all(x == all_valid_true[0] for x in all_valid_true)
+  assert all(all(x == y for x, y in zip(l, all_valid_true[0])) for l in all_valid_true)
   
   # Majority vote for the predictions
   preds = []
@@ -64,10 +66,19 @@ if __name__ == "__main__":
     preds.append(max(set(votes), key = votes.count))
 
   valid_auroc = roc_auc_score(all_valid_true[0], preds)
-  tqdm.write("Validation AUROC: {:.2f}".format(valid_auroc))
+  tqdm.write("Ensemble Validation AUROC: {:.2f}".format(valid_auroc))
 
   valid_ap = average_precision_score(all_valid_true[0], preds)
-  tqdm.write("Validation AP: {:.2f}".format(valid_ap))
+  tqdm.write("Ensemble Validation AP: {:.2f}".format(valid_ap))
+
+  for i, (pred, true) in enumerate(zip(all_valid_pred, all_valid_true)):
+    auroc = roc_auc_score(true, pred)
+    ap = average_precision_score(true, pred)
+
+    tqdm.write(f"Model {str(i+1)} AUROC: {auroc}")
+    tqdm.write(f"Model {str(i+1)} AP: {ap}")
+
+
 
 
   

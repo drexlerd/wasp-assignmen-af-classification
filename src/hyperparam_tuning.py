@@ -21,6 +21,7 @@ if __name__ == "__main__":
   arg_parser.add_argument("--n_epochs", type=int, default=200)
   arg_parser.add_argument("--walltime_limit", type=int, default=120)
   arg_parser.add_argument("--output_folder", type=str)
+  
   args = arg_parser.parse_args()
 
   cs = ConfigurationSpace({
