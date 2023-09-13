@@ -8,3 +8,5 @@ ecg-preprocessing
 outputs
 __pycache__
 models
+submission
+submission.zip

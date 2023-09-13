@@ -5,7 +5,6 @@ import numpy as np
 import torch
 
 from ConfigSpace import ConfigurationSpace
-from callback import CustomCallback
 from smac import Scenario
 from smac import HyperparameterOptimizationFacade as HPOFacade
 from multiprocessing import freeze_support
@@ -50,11 +49,8 @@ if __name__ == "__main__":
       n_workers=args.n_workers,
   )
 
-  callback = CustomCallback()
 
-  smac = HPOFacade(scenario=scenario, target_function=train,
-                  #  callbacks=[callback]
-              )
+  smac = HPOFacade(scenario=scenario, target_function=train)
   incumbent = smac.optimize()
 
   with open(os.path.join(args.output_folder, "incumbent.txt"), "w") as f:

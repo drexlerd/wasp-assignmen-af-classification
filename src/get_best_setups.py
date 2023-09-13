@@ -1,18 +1,9 @@
 import argparse
 import os
-from pathlib import Path
-import numpy as np
-import torch
 import json
 
 from ConfigSpace import ConfigurationSpace
-from callback import CustomCallback
-from smac import Scenario
-from smac import HyperparameterOptimizationFacade as HPOFacade
 from smac.runhistory import RunHistory
-
-from train import train
-
 
 def get_cs_dict(configspace_file):
   saved_cs = json.load(open(configspace_file, "r"))
